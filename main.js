@@ -1,5 +1,25 @@
+// 纽约市的边界大概范围
+const nycBounds = L.latLngBounds(
+  [40.4774, -74.2591], // Southwest corner (Staten Island附近)
+  [40.9176, -73.7004] // Northeast corner (Bronx & Queens上方)
+);
+
+// 初始化地图
+const map = L.map('map', {
+  maxBounds: nycBounds,
+  maxBoundsViscosity: 1.0, // 拖不出边界
+  minZoom: 13 // 防止放得太小
+}).setView([40.7291, -73.9812], 15); // 默认显示曼哈顿的经纬度
+
+// 引入OpenStreetMap的tile图层
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
 
 
+// 获取所有树的数据
 async function fetchAllTrees() {
   let allData = [];
   let offset = 0;
@@ -9,7 +29,6 @@ async function fetchAllTrees() {
   while (moreData) {
     const response = await fetch(`https://data.cityofnewyork.us/resource/uvpi-gqnh.json?$limit=${limit}&$offset=${offset}&boroname=Manhattan`);
     const data = await response.json();
-
     allData = allData.concat(data);
     offset += limit;
 
@@ -21,6 +40,69 @@ async function fetchAllTrees() {
   return allData;
 }
 
+
+function getTreeCategory(species) {
+  const s = (species || "").toLowerCase();
+
+  // 常绿树种
+  if (
+    s.includes("pine") || s.includes("spruce") || s.includes("fir") ||
+    s.includes("cedar") || s.includes("hemlock") || s.includes("arborvitae") ||
+    s.includes("holly") || s.includes("redcedar") || s.includes("white cedar")
+  ) {
+    return {
+      group: "Evergreen",
+      color: "#283618"
+    }; // 深绿
+  }
+
+  // 坚果类（nut-producing trees）
+  if (
+    s.includes("walnut") || s.includes("hickory") || s.includes("chestnut") ||
+    s.includes("hazelnut") || s.includes("pecan") || s.includes("beech") ||
+    s.includes("oak") // 橡树也结坚果（acorns）
+  ) {
+    return {
+      group: "Nut Tree",
+      color: "#8B4513"
+    }; // 棕色
+  }
+
+  // 水果类（fruiting trees）
+  if (
+    s.includes("cherry") || s.includes("crab") || s.includes("pear") ||
+    s.includes("apple") || s.includes("serviceberry") || s.includes("dogwood") ||
+    s.includes("hackberry") || s.includes("mulberry") || s.includes("ginkgo") ||
+    s.includes("sweetgum") || s.includes("persimmon") || s.includes("fig") ||
+    s.includes("plum") || s.includes("apricot") || s.includes("peach")
+  ) {
+    return {
+      group: "Fruiting Tree",
+      color: "#FFD700"
+    }; // 黄色
+  }
+
+  // 会开花但不太结果的观赏树
+  if (
+    s.includes("redbud") || s.includes("magnolia") || s.includes("mimosa") ||
+    s.includes("fringetree") || s.includes("empress") || s.includes("snowbell") ||
+    s.includes("crepe") || s.includes("kousa") || s.includes("crimson king") ||
+    s.includes("catalpa") || s.includes("tree lilac") || s.includes("maackia")
+  ) {
+    return {
+      group: "Flowering Only",
+      color: "#FF69B4"
+    }; // 粉色
+  }
+
+  // 落叶但不开花不开果（或信息不足）
+  return {
+    group: "Deciduous Non-Flowering",
+    color: "#90a955"
+  }; // 浅绿色
+}
+
+// 显示曼哈顿的树，并在地图上添加标记
 async function showManhattanTrees() {
   const data = await fetchAllTrees();
   const manhattanTrees = data.filter(tree => tree.boroname === "Manhattan");
@@ -30,19 +112,113 @@ async function showManhattanTrees() {
   loadingText.innerText = `共找到 ${manhattanTrees.length} 棵树：`;
 
   manhattanTrees.forEach(tree => {
-    const div = document.createElement("div");
-    div.className = "tree-item";
-    div.innerHTML = `
-        <strong>🌲 ${tree.spc_common || "Unknown species"}</strong><br>
-        ID: ${tree.tree_id}<br>
-        Status: ${tree.status || 'N/A'}<br>
-        健康状况: ${tree.health || "Unknown"}<br>
-        位置: (${tree.latitude}, ${tree.longitude})<br>
-        steward	有无认领照顾者: ${tree.steward || 'N/A'}<br>
-        user_type 谁收集的数据: ${tree.user_type || 'N/A'}
-      `;
-    listContainer.appendChild(div);
+    if (tree.latitude && tree.longitude) {
+      const category = getTreeCategory(tree.spc_common);
+
+      L.circleMarker([tree.latitude, tree.longitude], {
+          radius: 5,
+          fillColor: category.color,
+          fillOpacity: 0.8,
+          color: 'white',
+          weight: 0.8
+        }).addTo(map)
+        .bindPopup(`
+        <b>🌳 ${tree.spc_common || "Unknown Tree"}</b><br>
+        分类: ${category.group}<br>
+        <button onclick="openChat(${tree.tree_id})">跟我说话 💬</button>
+      `);
+    }
   });
 }
 
+function openChat(treeId) {
+  const chatBox = document.getElementById("chat-box");
+  const chatLog = document.getElementById("chat-log");
+  const chatOptions = document.getElementById("chat-options");
+
+  chatBox.style.display = "block";
+  chatLog.innerHTML = `<p>🌿 你正在和树 ID ${treeId} 交谈</p>`;
+
+  const questions = [
+    "你会开花吗？",
+    "你会结果吗？",
+    "你叫什么名字？",
+    "你今天遇到了谁？",
+    "你渴吗？"
+  ];
+
+  // 随机选3个问题
+  const shuffled = questions.sort(() => 0.5 - Math.random());
+  const selected = shuffled.slice(0, 3);
+
+  // 清空旧按钮
+  chatOptions.innerHTML = "";
+
+  // 创建按钮
+  selected.forEach(q => {
+    const btn = document.createElement("button");
+    btn.innerText = q;
+    btn.style.margin = "3px";
+    btn.onclick = () => respondToQuestion(q);
+    chatOptions.appendChild(btn);
+  });
+}
+
+function respondToQuestion(question) {
+  const chatLog = document.getElementById("chat-log");
+
+  // 用户的问题
+  chatLog.innerHTML += `<p>🧍 你：${question}</p>`;
+
+  // 树的回答逻辑
+  let response = "🌳 我还在思考这个问题...";
+
+  if (question.includes("开花")) {
+    response = Math.random() < 0.5 ? "🌸 我春天会开花！" : "🙅‍♂️ 我不开花～";
+  } else if (question.includes("结果")) {
+    response = Math.random() < 0.3 ? "🍎 是的，我结出果实了！" : "我只是装饰型，不结果 😌";
+  } else if (question.includes("你叫什么名字")) {
+    response = "我没有正式的名字，不过你可以叫我小树～";
+  } else if (question.includes("遇到了谁")) {
+    response = "🍂 有风和一只松鼠来看我。";
+  } else if (question.includes("渴")) {
+    response = Math.random() < 0.4 ? "💧 是的，我有点渴。" : "😊 我现在水分很充足～";
+  }
+
+  setTimeout(() => {
+    chatLog.innerHTML += `<p>${response}</p>`;
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }, 500);
+}
+
+function getTreeStatus() {
+  const thirsty = Math.random() < 0.3;
+  const hasFruit = Math.random() < 0.2;
+  const caredFor = Math.random() < 0.5;
+
+  return {
+    thirsty,
+    hasFruit,
+    caredFor
+  };
+}
+
+function sendMessage() {
+  const input = document.getElementById("chat-input");
+  const log = document.getElementById("chat-log");
+
+  const userMessage = input.value.trim();
+  if (userMessage) {
+    log.innerHTML += `<p>🧍 你：${userMessage}</p>`;
+    input.value = "";
+
+    // 简单回应（你可以后续接入 GPT 或规则回应）
+    setTimeout(() => {
+      log.innerHTML += `<p>🌳 树：我正在 photosynthesize 😌</p>`;
+    }, 500);
+  }
+}
+
+
+// 调用函数显示树的数据
 showManhattanTrees();
