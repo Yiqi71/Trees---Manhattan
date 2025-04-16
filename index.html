@@ -1,26 +1,11 @@
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>NYC Trees - Manhattan</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-    }
-
-    .tree-item {
-      margin-bottom: 10px;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 5px;
-    }
-
-    #map {
-      height: 600px;
-    }
-
-    #chat-box{
-      z-index: 1000;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
+  <script src="main.js" defer></script>
 </head>
 
 <body>
@@ -28,8 +13,8 @@
   <p id="loading">Loading data, please wait...</p>
   <div id="chat-box"
     style="display:none; position:fixed; bottom:20px; right:20px; width:300px; height:400px; background:white; border:1px solid #ccc; padding:10px;">
-    <h3>和树聊天</h3>
-    <div id="chat-log" style="height:300px; overflow-y:auto;"></div>
+    <h3>Chat</h3>
+    <div id="chat-log" style="height:200px; overflow-y:auto;"></div>
     <div id="chat-options"></div>
   </div>
   <div id="tree-list"></div>
@@ -37,11 +22,10 @@
   <!-- 地图容器 -->
   <div id="map"></div>
 
-
-
   <!-- 引入Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
-  <script src="main.js"></script>
 </body>
+
+</html>

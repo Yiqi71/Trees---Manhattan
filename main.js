@@ -109,7 +109,7 @@ async function showManhattanTrees() {
 
   const listContainer = document.getElementById("tree-list");
   const loadingText = document.getElementById("loading");
-  loadingText.innerText = `共找到 ${manhattanTrees.length} 棵树：`;
+  loadingText.innerText = ` ${manhattanTrees.length} trees you can talk to：`;
 
   manhattanTrees.forEach(tree => {
     if (tree.latitude && tree.longitude) {
@@ -125,26 +125,26 @@ async function showManhattanTrees() {
         .bindPopup(`
         <b>🌳 ${tree.spc_common || "Unknown Tree"}</b><br>
         分类: ${category.group}<br>
-        <button onclick="openChat(${tree.tree_id})">跟我说话 💬</button>
+        <button onclick="openChat('${tree.tree_id}', '${category.group}')">💬</button>
       `);
     }
   });
 }
 
-function openChat(treeId) {
+function openChat(id, group) {
   const chatBox = document.getElementById("chat-box");
   const chatLog = document.getElementById("chat-log");
   const chatOptions = document.getElementById("chat-options");
 
   chatBox.style.display = "block";
-  chatLog.innerHTML = `<p>🌿 你正在和树 ID ${treeId} 交谈</p>`;
+  chatLog.innerHTML = `<p>🌿 You're talking to tree ID ${id}</p>`;
 
   const questions = [
-    "你会开花吗？",
-    "你会结果吗？",
-    "你叫什么名字？",
-    "你今天遇到了谁？",
-    "你渴吗？"
+    "Will you blossom？",
+    // "你会结果吗？",
+    // "你叫什么名字？",
+    // "你今天遇到了谁？",
+    "Are you thirsty？"
   ];
 
   // 随机选3个问题
@@ -159,30 +159,36 @@ function openChat(treeId) {
     const btn = document.createElement("button");
     btn.innerText = q;
     btn.style.margin = "3px";
-    btn.onclick = () => respondToQuestion(q);
+    btn.onclick = () => respondToQuestion(q, group);
     chatOptions.appendChild(btn);
   });
 }
 
-function respondToQuestion(question) {
+function respondToQuestion(question, group) {
   const chatLog = document.getElementById("chat-log");
 
+  // const category = getTreeCategory(tree.spc_common);
   // 用户的问题
-  chatLog.innerHTML += `<p>🧍 你：${question}</p>`;
+  chatLog.innerHTML += `<p>🧍 You：${question}</p>`;
 
   // 树的回答逻辑
-  let response = "🌳 我还在思考这个问题...";
+  let response = "🌳 ...";
 
-  if (question.includes("开花")) {
-    response = Math.random() < 0.5 ? "🌸 我春天会开花！" : "🙅‍♂️ 我不开花～";
+  if (question.includes("blossom")) {
+    if (group == "Fruiting Tree" || group == "Nut Tree" || group == "Flowering Only") {
+      response = "🌸";
+    } else {
+      response = "🙅‍♂️";
+    }
+
   } else if (question.includes("结果")) {
     response = Math.random() < 0.3 ? "🍎 是的，我结出果实了！" : "我只是装饰型，不结果 😌";
   } else if (question.includes("你叫什么名字")) {
     response = "我没有正式的名字，不过你可以叫我小树～";
   } else if (question.includes("遇到了谁")) {
     response = "🍂 有风和一只松鼠来看我。";
-  } else if (question.includes("渴")) {
-    response = Math.random() < 0.4 ? "💧 是的，我有点渴。" : "😊 我现在水分很充足～";
+  } else if (question.includes("thirsty")) {
+    response = Math.random() < 0.4 ? "💧 yes" : "😊";
   }
 
   setTimeout(() => {
@@ -204,17 +210,16 @@ function getTreeStatus() {
 }
 
 function sendMessage() {
-  const input = document.getElementById("chat-input");
   const log = document.getElementById("chat-log");
 
   const userMessage = input.value.trim();
   if (userMessage) {
-    log.innerHTML += `<p>🧍 你：${userMessage}</p>`;
+    log.innerHTML += `<p>🧍 You：${userMessage}</p>`;
     input.value = "";
 
     // 简单回应（你可以后续接入 GPT 或规则回应）
     setTimeout(() => {
-      log.innerHTML += `<p>🌳 树：我正在 photosynthesize 😌</p>`;
+      log.innerHTML += `<p>🌳 ：我正在 photosynthesize 😌</p>`;
     }, 500);
   }
 }
