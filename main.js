@@ -1,3 +1,6 @@
+// network的线
+let networkLine = null; // 连接线对象
+
 // 纽约市的边界大概范围
 const nycBounds = L.latLngBounds(
   [40.4774, -74.2591], // Southwest corner (Staten Island附近)
@@ -139,22 +142,16 @@ function openChat(id, group) {
   chatBox.style.display = "block";
   chatLog.innerHTML = `<p>🌿 You're talking to tree ID ${id}</p>`;
 
+  saveTreeToNetwork(id);
+
   const questions = [
     "Will you blossom？",
-    // "你会结果吗？",
-    // "你叫什么名字？",
-    // "你今天遇到了谁？",
     "Are you thirsty？"
   ];
-
-  // 随机选3个问题
   const shuffled = questions.sort(() => 0.5 - Math.random());
   const selected = shuffled.slice(0, 3);
 
-  // 清空旧按钮
   chatOptions.innerHTML = "";
-
-  // 创建按钮
   selected.forEach(q => {
     const btn = document.createElement("button");
     btn.innerText = q;
@@ -162,6 +159,14 @@ function openChat(id, group) {
     btn.onclick = () => respondToQuestion(q, group);
     chatOptions.appendChild(btn);
   });
+}
+
+function saveTreeToNetwork(id) {
+  let network = JSON.parse(localStorage.getItem("myTreeNetwork")) || [];
+  if (!network.includes(id)) {
+    network.push(id);
+    localStorage.setItem("myTreeNetwork", JSON.stringify(network));
+  }
 }
 
 function respondToQuestion(question, group) {
@@ -227,3 +232,34 @@ function sendMessage() {
 
 // 调用函数显示树的数据
 showManhattanTrees();
+
+function showMyNetwork() {
+  if (networkLine) {
+    map.removeLayer(networkLine);
+    networkLine = null;
+    return;
+  }
+
+  const network = JSON.parse(localStorage.getItem("myTreeNetwork")) || [];
+  const positions = [];
+
+  network.forEach(id => {
+    const marker = markerMap[id]; // 假设你有一个 id → marker 的映射
+    if (marker) {
+      const latlng = marker.getLatLng();
+      positions.push([latlng.lat, latlng.lng]);
+    }
+  });
+
+  if (positions.length > 1) {
+    networkLine = L.polyline(positions, {
+      color: "purple",
+      weight: 3,
+      opacity: 0.7,
+      dashArray: "8, 5"
+    }).addTo(map);
+    map.fitBounds(networkLine.getBounds());
+  } else {
+    alert("你至少需要联系两棵树才会画线！");
+  }
+}
