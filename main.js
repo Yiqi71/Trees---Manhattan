@@ -1,3 +1,5 @@
+// localStorage.clear();
+
 // network的线
 let networkLine = null; // 连接线对象
 let allTrees = [];
@@ -239,7 +241,15 @@ function openChat(id, group) {
   const chatOptions = document.getElementById("chat-options");
 
   chatBox.style.display = "block";
-  chatLog.innerHTML = `<p>🌿 You're talking to tree ID ${id}</p>`;
+  chatLog.innerHTML = "";
+
+  // 加载聊天记录
+  const savedLog = JSON.parse(localStorage.getItem(`chat_${id}`)) || [];
+  savedLog.forEach(entry => {
+    chatLog.innerHTML += `<p>${entry}</p>`;
+  });
+
+  chatLog.innerHTML += `<p>🌿 You're talking to tree ID ${id}</p>`;
 
   saveTreeToNetwork(id);
 
@@ -255,7 +265,7 @@ function openChat(id, group) {
     const btn = document.createElement("button");
     btn.innerText = q;
     btn.style.margin = "3px";
-    btn.onclick = () => respondToQuestion(q, group);
+    btn.onclick = () => respondToQuestion(q, group, id);
     chatOptions.appendChild(btn);
   });
 }
@@ -268,38 +278,37 @@ function saveTreeToNetwork(id) {
   }
 }
 
-function respondToQuestion(question, group) {
+function addToChatLog(treeId, message) {
+  const key = `chat_${treeId}`;
+  const log = JSON.parse(localStorage.getItem(key)) || [];
+  log.push(message);
+  localStorage.setItem(key, JSON.stringify(log));
+}
+
+function respondToQuestion(question, group, id) {
   const chatLog = document.getElementById("chat-log");
 
-  // const category = getTreeCategory(tree.spc_common);
-  // 用户的问题
   chatLog.innerHTML += `<p>🧍 You：${question}</p>`;
+  addToChatLog(id, `🧍 You：${question}`);
 
-  // 树的回答逻辑
   let response = "🌳 ...";
-
   if (question.includes("blossom")) {
     if (group == "Fruiting Tree" || group == "Nut Tree" || group == "Flowering Only") {
       response = "🌸";
     } else {
       response = "🙅‍♂️";
     }
-
-  } else if (question.includes("结果")) {
-    response = Math.random() < 0.3 ? "🍎 是的，我结出果实了！" : "我只是装饰型，不结果 😌";
-  } else if (question.includes("你叫什么名字")) {
-    response = "我没有正式的名字，不过你可以叫我小树～";
-  } else if (question.includes("遇到了谁")) {
-    response = "🍂 有风和一只松鼠来看我。";
   } else if (question.includes("thirsty")) {
     response = Math.random() < 0.4 ? "💧 yes" : "😊";
   }
 
   setTimeout(() => {
     chatLog.innerHTML += `<p>${response}</p>`;
+    addToChatLog(id, response);
     chatLog.scrollTop = chatLog.scrollHeight;
   }, 500);
 }
+
 
 function getTreeStatus() {
   const thirsty = Math.random() < 0.3;
