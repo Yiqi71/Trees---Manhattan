@@ -244,12 +244,10 @@ function openChat(id, group) {
   chatLog.innerHTML = "";
 
   // 加载聊天记录
-  const savedLog = JSON.parse(localStorage.getItem(`chat_${id}`)) || [];
-  savedLog.forEach(entry => {
-    chatLog.innerHTML += `<p>${entry}</p>`;
-  });
+  loadChatLog(id, chatLog);
 
-  chatLog.innerHTML += `<p>🌿 You're talking to tree ID ${id}</p>`;
+  let title = document.getElementById("chat-title");
+  title.innerHTML = `🌿 ${id}`;
 
   saveTreeToNetwork(id);
 
@@ -285,11 +283,23 @@ function addToChatLog(treeId, message) {
   localStorage.setItem(key, JSON.stringify(log));
 }
 
+function updateChatLog(treeId, html) {
+  const key = `chat_${treeId}`;
+  localStorage.setItem(key, html);
+}
+
+function loadChatLog(treeId, chatLog){
+  const key = `chat_${treeId}`;
+  const savedChat = localStorage.getItem(key);
+  if (savedChat) {
+    chatLog.innerHTML = savedChat;
+  }
+}
+
 function respondToQuestion(question, group, id) {
   const chatLog = document.getElementById("chat-log");
 
-  chatLog.innerHTML += `<p>🧍 You：${question}</p>`;
-  addToChatLog(id, `🧍 You：${question}`);
+  chatLog.innerHTML += `<p class="human-res"> ${question} 🧍</p>`;
 
   let response = "🌳 ...";
   if (question.includes("blossom")) {
@@ -303,8 +313,8 @@ function respondToQuestion(question, group, id) {
   }
 
   setTimeout(() => {
-    chatLog.innerHTML += `<p>${response}</p>`;
-    addToChatLog(id, response);
+    chatLog.innerHTML += `<p class="tree-res">${response}</p>`;
+    updateChatLog(id, chatLog.innerHTML);
     chatLog.scrollTop = chatLog.scrollHeight;
   }, 500);
 }
