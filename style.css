@@ -1,8 +1,10 @@
 /* 全局设置 */
 body {
   font-family: 'Noto Sans', 'Quicksand', sans-serif;
-  background-color: #F1F8E9; /* 超浅绿背景 */
-  color: #333333; /* 深灰色文字 */
+  background-color: #F1F8E9;
+  /* 超浅绿背景 */
+  color: #333333;
+  /* 深灰色文字 */
   margin: 0;
   padding: 20px;
   overflow-x: hidden;
@@ -18,7 +20,8 @@ body {
   font-size: 24px;
   padding: 20px 40px;
   margin: 20px;
-  background-color: #81C784; /* 温暖绿 */
+  background-color: #81C784;
+  /* 温暖绿 */
   color: white;
   border: none;
   border-radius: 16px;
@@ -27,7 +30,8 @@ body {
 }
 
 .home-buttons button:hover {
-  background-color: #66BB6A; /* 更深一点的绿 */
+  background-color: #66BB6A;
+  /* 更深一点的绿 */
   transform: scale(1.05);
 }
 
@@ -36,7 +40,7 @@ body {
   height: 80vh;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* 聊天框 */
@@ -54,7 +58,7 @@ body {
   z-index: 2000;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 #chat-log {
@@ -67,11 +71,54 @@ body {
   text-align: center;
 }
 
+.chat-bubble {
+  max-width: 70%;
+  display: inline-block;
+  padding: 10px 15px;
+  border-radius: 18px;
+  word-break: break-word;
+  font-size: 16px;
+  animation: popIn 0.2s ease-out;
+  margin: 1px 0;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; /* 不要让它靠左或靠右，内部自己控制 */
+  margin: 0;
+}
+
+
+.tree-message {
+  align-items: center;
+}
+
+/* 聊天气泡 */
+.human-res {
+  background-color: #D7CCC8;
+  align-self: flex-end; /* 自己右对齐 */
+}
+
+.tree-res {
+  background-color: #C5E1A5;
+  align-self: flex-start; /* 自己左对齐 */
+}
+.timestamp {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  align-self: center; /* 自己居中 */
+  margin: 5px 0;
+}
+
+
 .back-btn {
   position: absolute;
   top: 20px;
   left: 20px;
-  background: #FFD54F; /* 温暖金黄 */
+  background: #FFD54F;
+  /* 温暖金黄 */
   border: none;
   padding: 10px 20px;
   border-radius: 12px;
@@ -85,30 +132,6 @@ body {
   transform: scale(1.05);
 }
 
-/* 聊天气泡 */
-.human-res {
-  background-color: #D7CCC8; /* 柔和棕色 */
-  margin: 0.25em 0;
-  padding: 0.5em;
-  border-radius: 1em;
-  text-align: right;
-  max-width: 80%;
-  margin-left: auto;
-  word-break: break-word;
-  animation: popIn 0.2s ease-out;
-}
-
-.tree-res {
-  background-color: #C5E1A5; /* 浅绿气泡 */
-  margin: 0.25em 0;
-  padding: 0.5em;
-  border-radius: 1em;
-  text-align: left;
-  max-width: 80%;
-  margin-right: auto;
-  word-break: break-word;
-  animation: popIn 0.2s ease-out;
-}
 
 /* 聊天气泡弹出动画 */
 @keyframes popIn {
@@ -116,6 +139,7 @@ body {
     transform: scale(0.6);
     opacity: 0;
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -133,8 +157,9 @@ body {
   font-size: 14px;
   cursor: pointer;
   pointer-events: auto;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
+
 .explore-btn:hover {
   background-color: #E8F5E9;
 }
@@ -155,4 +180,128 @@ body {
   color: #999;
   margin-bottom: 4px;
   text-align: center;
+}
+
+
+
+.popup-card {
+  position: relative;
+  font-family: 'Noto Sans', 'Quicksand', sans-serif;
+  background-color: #F1F8E9; /* 和网页背景呼应的淡绿 */
+  backdrop-filter: blur(3px);
+  border-radius: 12px;
+  padding: 10px;
+  /* box-shadow: 0 2px 6px rgba(0,0,0,0.1); */
+  text-align: center;
+  min-width: 180px;
+}
+
+.popup-title {
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.popup-category {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.popup-chat-button {
+  background-color: #81C784;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.popup-chat-button:hover {
+  background-color: #66BB6A;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+
+
+/* 修改 Leaflet 默认 Popup 外观 */
+.leaflet-popup-content-wrapper {
+  background: #F1F8E9 !important; /* 浅绿色背景，强制覆盖 */
+  color: #333;
+  border-radius: 16px !important; /* 圆角更柔和 */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border: none !important; /* 去掉丑黑边框 */
+  animation: fadeInPopup 0.3s ease-out;
+  padding: 0; /* 让内部的popup-card自己控制padding */
+}
+
+.leaflet-popup-content {
+  margin: 0; /* 取消默认margin */
+  font-family: 'Noto Sans', 'Quicksand', sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.leaflet-popup-tip {
+  background: #F1F8E9 !important; /* 箭头背景强制浅绿色 */
+  border: none !important; /* 去掉箭头的默认边框 */
+  width: 20px;
+  height: 10px;
+  display: none !important;
+}
+
+/* .popup-card::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 16px;
+  background: #F1F8E9;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+} */
+
+
+@keyframes fadeInPopup {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+
+
+#loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 20px 30px;
+  border-radius: 10px;
+  font-size: 18px;
+  z-index: 9999;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  animation: blink 1.2s infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
 }

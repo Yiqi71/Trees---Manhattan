@@ -5,7 +5,7 @@ let map;
 let networkLine = null;
 let allTrees = [];
 const markerMap = {};
-let drawBox;
+let drawCircle;
 let exploreButton;
 
 let lastMessageTimes = {};
@@ -67,10 +67,11 @@ function initMap() {
   );
 
   map = L.map('map', {
+    editable: true,
     maxBounds: nycBounds,
     maxBoundsViscosity: 1.0,
     minZoom: 13
-  }).setView([40.7291, -73.9812], 15);
+  }).setView([40.6930336, -73.9872615], 15);
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
@@ -80,62 +81,73 @@ function initMap() {
 }
 
 function initSelectionBox() {
-  const bounds = L.latLngBounds(
-    [40.72, -73.99],
-    [40.73, -73.97]
-  );
+  const center = L.latLng(40.6930336, -73.9872615); // 中心点
+  const radius = 300; // 半径，单位是米
 
-  drawBox = L.rectangle(bounds, {
+  drawCircle = L.circle(center, {
+    radius: radius,
     color: "#4caf50",
     weight: 2,
-    draggable: true,
-    fillOpacity: 0.1
+    fillOpacity: 0.1,
   }).addTo(map);
+  drawCircle.enableEdit();
 
-  drawBox.editing.enable();
 
   // 创建 Explore 按钮
   exploreButton = L.DomUtil.create("button", "explore-btn");
   exploreButton.innerText = "🌿 Explore this area";
-  exploreButton.onclick = exploreTreesInBox;
+  exploreButton.onclick = exploreTreesInCircle;
 
-  // 把按钮添加到 map 容器
   const container = map.getContainer();
   container.appendChild(exploreButton);
 
-  // 每次移动 drawBox 都重新定位按钮
   map.on('move', updateExploreButtonPosition);
   map.on('zoom', updateExploreButtonPosition);
-  drawBox.on('edit', updateExploreButtonPosition);
+  drawCircle.on('editable:dragend', updateExploreButtonPosition);
+  drawCircle.on('editable:vertex:dragend', updateExploreButtonPosition);
 
   updateExploreButtonPosition();
 }
 
+
 function updateExploreButtonPosition() {
-  if (!drawBox || !exploreButton) return;
+  if (!drawCircle || !exploreButton) return;
 
-  const bounds = drawBox.getBounds();
-  const ne = bounds.getNorthEast(); // 右上角
-  const sw = bounds.getSouthWest(); // 左下角
+  const centerLatLng = drawCircle.getLatLng();
+  const radiusMeters = drawCircle.getRadius();
 
-  // 算出右下角经纬度
-  const rightBottom = L.latLng(sw.lat, ne.lng);
-  const pixelPos = map.latLngToContainerPoint(rightBottom);
+  // 将圆心的地理位置转为屏幕坐标（像素点）
+  const centerPixel = map.latLngToContainerPoint(centerLatLng);
 
-  exploreButton.style.left = `${pixelPos.x - 50}px`; // 按钮偏移一点点居中
-  exploreButton.style.top = `${pixelPos.y - 20}px`; // 让按钮稍微高一点，不挡住边框
+  // 把圆心下方 radius 米的位置也转成像素点
+  // 注意这里不能简单加像素，要先算一个 radius 的地理位置点，再转换
+  const bottomLatLng = L.GeometryUtil.destination(centerLatLng, 180, radiusMeters);
+  const bottomPixel = map.latLngToContainerPoint(bottomLatLng);
+
+  const pixelOffset = bottomPixel.y - centerPixel.y;
+
+  exploreButton.style.left = `${centerPixel.x - 80}px`; // 居中一点
+  exploreButton.style.top = `${centerPixel.y + pixelOffset + 10}px`; // 圆下方 + 10px
 }
 
-async function exploreTreesInBox() {
-  const bounds = drawBox.getBounds();
+
+async function exploreTreesInCircle() {
+  const loading = document.getElementById("loading-indicator");
+  loading.style.display = "block"; // 显示加载提示
+
+  const center = drawCircle.getLatLng();
+  const radius = drawCircle.getRadius();
   const data = await fetchAllTrees();
-  const inBox = data.filter(tree => {
+
+  const inCircle = data.filter(tree => {
     const lat = parseFloat(tree.latitude);
     const lng = parseFloat(tree.longitude);
-    return lat && lng && bounds.contains([lat, lng]);
+    if (!lat || !lng) return false;
+    const distance = map.distance(center, L.latLng(lat, lng));
+    return distance <= radius;
   });
 
-  inBox.forEach(tree => {
+  inCircle.forEach(tree => {
     const category = getTreeCategory(tree.spc_common);
     const marker = L.circleMarker([tree.latitude, tree.longitude], {
       radius: 5,
@@ -144,68 +156,112 @@ async function exploreTreesInBox() {
       color: 'white',
       weight: 0.8
     }).addTo(map).bindPopup(`
-      <b>🌳 ${tree.spc_common || "Unknown Tree"}</b><br>
-      分类: ${category.group}<br>
-      <button onclick="openChat('${tree.tree_id}', '${category.group}')">💬</button>
+      <div class="popup-card">
+        <div class="popup-title">🌳 ${tree.spc_common || "Unknown Tree"}</div>
+        <div class="popup-category">a ${category.group}</div>
+        <button class="popup-chat-button" onclick="openChat('${tree.tree_id}', '${category.group}')">🌱 Try to Connect</button>
+      </div>
     `);
     markerMap[tree.tree_id] = marker;
   });
 
-  document.getElementById("loading").innerText = `${inBox.length} trees you can talk to in this area`;
+  loading.style.display = "none"; // 加载完成后隐藏
 }
+
+
+
+
 
 async function fetchAllTrees() {
   let allData = [];
-  let offset = 0;
-  const limit = 1000;
-  let moreData = true;
+  const boroughs = ["Brooklyn"];
+  
+  for (const borough of boroughs) {
+    let offset = 0;
+    const limit = 1000;
+    let moreData = true;
+    
+    while (moreData) {
+      const response = await fetch(`https://data.cityofnewyork.us/resource/uvpi-gqnh.json?$limit=${limit}&$offset=${offset}&borough=${encodeURIComponent(borough)}`);
+      
+      if (!response.ok) {
+        console.error(`❌ Fetch failed at offset ${offset} for borough ${borough}`);
+        break;
+      }
+      
+      const data = await response.json();
+      const cleanedData = data.map(tree => ({
+        tree_id: tree.tree_id,
+        spc_common: tree.spc_common,
+        latitude: tree.latitude,
+        longitude: tree.longitude
+      }));
 
-  while (moreData) {
-    const response = await fetch(`https://data.cityofnewyork.us/resource/uvpi-gqnh.json?$limit=${limit}&$offset=${offset}&boroname=Manhattan`);
-    const data = await response.json();
-    allData = allData.concat(data);
-    offset += limit;
+      allData = allData.concat(cleanedData);
+      offset += limit;
 
-    if (data.length < limit) {
-      moreData = false;
+      if (data.length < limit) {
+        moreData = false;
+      }
     }
   }
 
+  console.log("🌳 Finished loading trees into memory!");
   return allData;
 }
+
+
+
 
 function getTreeCategory(species) {
   const s = (species || "").toLowerCase();
 
-  if (s.includes("pine") || s.includes("spruce") || s.includes("fir") || s.includes("cedar") || s.includes("hemlock")) {
+  if (
+    s.includes("pine") || s.includes("spruce") || s.includes("fir") ||
+    s.includes("cedar") || s.includes("hemlock")
+  ) {
     return {
       group: "Evergreen",
       color: "#283618"
     };
   }
-  if (s.includes("walnut") || s.includes("oak") || s.includes("chestnut")) {
+
+  if (
+    s.includes("walnut") || s.includes("oak") || s.includes("chestnut") ||
+    s.includes("hickory") || s.includes("hazelnut")
+  ) {
     return {
       group: "Nut Tree",
       color: "#8B4513"
     };
   }
-  if (s.includes("cherry") || s.includes("apple") || s.includes("pear")) {
+
+  if (
+    s.includes("cherry") || s.includes("apple") || s.includes("pear") ||
+    s.includes("plum") || s.includes("serviceberry")
+  ) {
     return {
       group: "Fruiting Tree",
       color: "#FFD700"
     };
   }
-  if (s.includes("magnolia") || s.includes("redbud") || s.includes("crepe")) {
+
+  if (
+    s.includes("magnolia") || s.includes("redbud") || s.includes("crepe") ||
+    s.includes("dogwood") || s.includes("snowbell") || s.includes("fringetree")
+  ) {
     return {
       group: "Flowering Only",
       color: "#FF69B4"
     };
   }
+
   return {
     group: "Deciduous Non-Flowering",
     color: "#90a955"
   };
 }
+
 
 function openChat(id, group) {
   const chatBox = document.getElementById("chat-box");
@@ -259,9 +315,10 @@ function respondToQuestion(question, group, id) {
     messageWrapper.appendChild(timeStamp);
   }
 
+  //  🧍
   const userMsg = document.createElement('p');
   userMsg.className = 'chat-bubble human-res pop-msg';
-  userMsg.textContent = `${question} 🧍`;
+  userMsg.textContent = `${question}`;
   messageWrapper.appendChild(userMsg);
 
   chatLog.appendChild(messageWrapper);
@@ -291,9 +348,10 @@ function respondToQuestion(question, group, id) {
       messageWrapper.appendChild(timeStamp);
     }
 
+    // 🌳 
     const treeMsg = document.createElement('p');
     treeMsg.className = 'chat-bubble tree-res pop-msg';
-    treeMsg.textContent = `🌳 ${response}`;
+    treeMsg.textContent = `${response}`;
     messageWrapper.appendChild(treeMsg);
 
     chatLog.appendChild(messageWrapper);
@@ -393,9 +451,38 @@ function shouldShowTimestamp(treeId, now) {
 
 
 function formatTime(date) {
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
+  const now = new Date();
+
+  // 计算是不是今天
+  const isToday = date.toDateString() === now.toDateString();
+
+  // 判断是不是昨天
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+
   const hour = date.getHours().toString().padStart(2, '0');
   const minute = date.getMinutes().toString().padStart(2, '0');
-  return `${month}-${day} ${hour}:${minute}`;
+
+  if (isToday) {
+    return `${hour}:${minute}`;
+  } else if (isYesterday) {
+    return `Yesterday ${hour}:${minute}`;
+  } else {
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${month}-${day} ${hour}:${minute}`;
+  }
 }
+
+
+// 🌱 背景自动预加载树数据
+// (async () => {
+//   if (!localStorage.getItem("treeCache")) {
+//     console.log("🌍 Preloading tree data...");
+//     await fetchAllTrees();
+//     console.log("✅ Tree data loaded and cached.");
+//   } else {
+//     console.log("📦 Tree data already in cache.");
+//   }
+// })();

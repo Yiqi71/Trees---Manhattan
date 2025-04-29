@@ -11,6 +11,9 @@
   <!-- Leaflet 样式和脚本 -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-editable@1.2.0/src/Leaflet.Editable.js"></script>
+  <script src="https://unpkg.com/leaflet-geometryutil"></script>
+
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
@@ -30,14 +33,16 @@
 
   <!-- 地图和聊天相关内容一开始隐藏 -->
   <div id="map-screen" style="display:none;">
-    <p id="loading">Loading data, please wait...</p>
+    <button class="back-btn" onclick="backHome()">⬅️ Back to Home</button>
+    <!-- <p id="loading">Loading data, please wait...</p> -->
     <div id="map"></div>
     <div id="chat-box" style="display:none;">
       <h3 id="chat-title"></h3>
       <div id="chat-log"></div>
       <div id="chat-options"></div>
     </div>
-    <button class="back-btn" onclick="backHome()">⬅️ Back to Home</button>
+    <div id="loading-indicator" style="display: none;">🌱 Loading trees...</div>
+
   </div>
 
 </body>
