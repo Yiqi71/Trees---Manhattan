@@ -1,3 +1,6 @@
+// localStorage.clear();
+
+
 let map;
 let networkLine = null;
 let allTrees = [];
@@ -5,6 +8,13 @@ const markerMap = {};
 let drawBox;
 let exploreButton;
 
+const personalities = [
+  { type: "Cheerful", delay: 300 },
+  { type: "Calm", delay: 1500 },
+  { type: "Lazy", delay: 3000 },
+  { type: "Talkative", delay: 500 },
+  { type: "Silent", delay: 4000 }
+];
 
 
 function startExplore() {
@@ -187,6 +197,7 @@ function openChat(id, group) {
 
   document.getElementById("chat-title").innerText = `🌿 ${id}`;
   saveTreeToNetwork(id);
+  assignPersonalityIfNeeded(id);
 
   const questions = [
     "Will you blossom？",
@@ -220,6 +231,7 @@ function respondToQuestion(question, group, id) {
     response = Math.random() < 0.4 ? "💧 yes" : "😊";
   }
 
+  const personality = getPersonality(id);
   setTimeout(() => {
     const treeMsg = document.createElement('p');
     treeMsg.className = 'tree-res pop-msg';
@@ -227,7 +239,7 @@ function respondToQuestion(question, group, id) {
     chatLog.appendChild(treeMsg);
     updateChatLog(id, chatLog.innerHTML);
     chatLog.scrollTop = chatLog.scrollHeight;
-  }, 500);
+  }, personality.delay);
 }
 
 function saveTreeToNetwork(id) {
@@ -289,6 +301,22 @@ function loadMyNetworkTrees() {
   });
 }
 
+function assignPersonalityIfNeeded(id) {
+  const key = `personality_${id}`;
+  if (!localStorage.getItem(key)) {
+    const randomPersonality = personalities[Math.floor(Math.random() * personalities.length)];
+    localStorage.setItem(key, JSON.stringify(randomPersonality));
+  }
+}
+
+function getPersonality(id) {
+  const key = `personality_${id}`;
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    return JSON.parse(saved);
+  }
+  return { type: "Calm", delay: 1500 }; // 默认给个性格
+}
 
 function formatTime() {
   const now = new Date();
