@@ -1,46 +1,110 @@
 body {
   font-family: sans-serif;
   padding: 20px;
+  margin: 0;
+  overflow-x: hidden;
 }
 
-.tree-item {
-  margin-bottom: 10px;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 5px;
+.home-buttons {
+  text-align: center;
+  margin-top: 50px;
+}
+
+.home-buttons button {
+  font-size: 24px;
+  padding: 20px 40px;
+  margin: 20px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.home-buttons button:hover {
+  background-color: #388e3c;
 }
 
 #map {
-  height: 600px;
+  height: 80vh;
 }
 
 #chat-box {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 350px;
+  height: 500px;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 10px;
+  overflow-y: auto;
   z-index: 2000;
+  display: flex;
+  flex-direction: column;
+}
+
+#chat-log {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+#chat-options {
+  text-align: center;
+}
+
+.back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.human-res {
+  background-color: #ccc;
+  margin: 0.25em 0;
+  padding: 0.25em;
+  border-radius: 0.5em;
+  /* text-align: right; */
+}
+
+.tree-res {
+  background-color: aquamarine;
+  margin: 0.25em 0;
+  padding: 0.25em;
+  border-radius: 0.5em;
 }
 
 .explore-btn {
   position: absolute;
   z-index: 1000;
-  bottom: 30px;
-  right: 30px;
   background-color: white;
-  border: 1px solid #4caf50;
+  border: 2px solid #4caf50;
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
+  pointer-events: auto;
+  /* 确保可以点 */
 }
 
-.human-res{
-  background-color: #ccc;
-  margin:0.25em 0;
-  padding:0.25em;
-  border-radius: 0.5em;
-  text-align: right;
+@keyframes popIn {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-.tree-res{
-  background-color: aquamarine;
-  margin:0.25em 0;
-  padding:0.25em;
-  border-radius: 0.5em;
+.pop-msg {
+  animation: popIn 0.2s ease-out;
 }

@@ -1,18 +1,57 @@
-// localStorage.clear();
-
-// network的线
-let networkLine = null; // 连接线对象
+let map;
+let networkLine = null;
 let allTrees = [];
 const markerMap = {};
-
-// 初始化地图后添加一个矩形（可拖动）
 let drawBox;
 let exploreButton;
 
+
+
+function startExplore() {
+  document.getElementById('home-screen').style.display = 'none';
+  document.getElementById('map-screen').style.display = 'block';
+
+  initMap();
+  initSelectionBox();
+}
+
+function startNetwork() {
+  document.getElementById('home-screen').style.display = 'none';
+  document.getElementById('map-screen').style.display = 'block';
+
+  initMap();
+  loadMyNetworkTrees();
+}
+
+function backHome() {
+  window.location.reload();
+}
+
+function initMap() {
+  if (map) return;
+
+  const nycBounds = L.latLngBounds(
+    [40.4774, -74.2591],
+    [40.9176, -73.7004]
+  );
+
+  map = L.map('map', {
+    maxBounds: nycBounds,
+    maxBoundsViscosity: 1.0,
+    minZoom: 13
+  }).setView([40.7291, -73.9812], 15);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(map);
+}
+
 function initSelectionBox() {
   const bounds = L.latLngBounds(
-    [40.72, -73.99], // Southwest corner
-    [40.73, -73.97] // Northeast corner
+    [40.72, -73.99],
+    [40.73, -73.97]
   );
 
   drawBox = L.rectangle(bounds, {
@@ -24,20 +63,41 @@ function initSelectionBox() {
 
   drawBox.editing.enable();
 
-  // 添加探索按钮（固定在右下角）
+  // 创建 Explore 按钮
   exploreButton = L.DomUtil.create("button", "explore-btn");
   exploreButton.innerText = "🌿 Explore this area";
   exploreButton.onclick = exploreTreesInBox;
 
+  // 把按钮添加到 map 容器
   const container = map.getContainer();
   container.appendChild(exploreButton);
+
+  // 每次移动 drawBox 都重新定位按钮
+  map.on('move', updateExploreButtonPosition);
+  map.on('zoom', updateExploreButtonPosition);
+  drawBox.on('edit', updateExploreButtonPosition);
+
+  updateExploreButtonPosition();
 }
 
-// 加载 drawBox 区域内的树
+function updateExploreButtonPosition() {
+  if (!drawBox || !exploreButton) return;
+
+  const bounds = drawBox.getBounds();
+  const ne = bounds.getNorthEast(); // 右上角
+  const sw = bounds.getSouthWest(); // 左下角
+
+  // 算出右下角经纬度
+  const rightBottom = L.latLng(sw.lat, ne.lng);
+  const pixelPos = map.latLngToContainerPoint(rightBottom);
+
+  exploreButton.style.left = `${pixelPos.x - 50}px`; // 按钮偏移一点点居中
+  exploreButton.style.top = `${pixelPos.y - 20}px`; // 让按钮稍微高一点，不挡住边框
+}
+
 async function exploreTreesInBox() {
   const bounds = drawBox.getBounds();
-
-  const data = await fetchAllTrees(); // 你原来的函数
+  const data = await fetchAllTrees();
   const inBox = data.filter(tree => {
     const lat = parseFloat(tree.latitude);
     const lng = parseFloat(tree.longitude);
@@ -47,82 +107,22 @@ async function exploreTreesInBox() {
   inBox.forEach(tree => {
     const category = getTreeCategory(tree.spc_common);
     const marker = L.circleMarker([tree.latitude, tree.longitude], {
-        radius: 5,
-        fillColor: category.color,
-        fillOpacity: 0.8,
-        color: 'white',
-        weight: 0.8
-      }).addTo(map)
-      .bindPopup(`
-        <b>🌳 ${tree.spc_common || "Unknown Tree"}</b><br>
-        分类: ${category.group}<br>
-        <button onclick="openChat('${tree.tree_id}', '${category.group}')">💬</button>
-      `);
-
+      radius: 5,
+      fillColor: category.color,
+      fillOpacity: 0.8,
+      color: 'white',
+      weight: 0.8
+    }).addTo(map).bindPopup(`
+      <b>🌳 ${tree.spc_common || "Unknown Tree"}</b><br>
+      分类: ${category.group}<br>
+      <button onclick="openChat('${tree.tree_id}', '${category.group}')">💬</button>
+    `);
     markerMap[tree.tree_id] = marker;
   });
 
-  document.getElementById("loading").innerText = ` ${inBox.length} trees you can talk to in this area`;
+  document.getElementById("loading").innerText = `${inBox.length} trees you can talk to in this area`;
 }
 
-
-async function loadMyNetworkTrees() {
-  const data = await fetchAllTrees(); // 你原来的函数
-
-  const myTreeIds = JSON.parse(localStorage.getItem("myTreeNetwork")) || [];
-  console.log(myTreeIds);
-  if (!data) {
-    console.warn("🌐 data 未加载，无法展示 My Network 的树");
-    return;
-  }
-
-  const myTrees = data.filter(tree => myTreeIds.includes(tree.tree_id));
-
-  myTrees.forEach(tree => {
-    const category = getTreeCategory(tree.spc_common);
-    const marker = L.circleMarker([tree.latitude, tree.longitude], {
-        radius: 6,
-        fillColor: category.color,
-        fillOpacity: 0.9,
-        color: 'gold',
-        weight: 2
-      }).addTo(map)
-      .bindPopup(`
-        <b>🌲 ${tree.spc_common || "Unknown Tree"}</b><br>
-        分类: ${category.group}<br>
-        <i>(In your network)</i><br>
-        <button onclick="openChat('${tree.tree_id}', '${category.group}')">💬</button>
-      `);
-
-    markerMap[tree.tree_id] = marker;
-  });
-}
-
-
-
-
-// 纽约市的边界大概范围
-const nycBounds = L.latLngBounds(
-  [40.4774, -74.2591], // Southwest corner (Staten Island附近)
-  [40.9176, -73.7004] // Northeast corner (Bronx & Queens上方)
-);
-
-// 初始化地图
-const map = L.map('map', {
-  maxBounds: nycBounds,
-  maxBoundsViscosity: 1.0, // 拖不出边界
-  minZoom: 13 // 防止放得太小
-}).setView([40.7291, -73.9812], 15); // 默认显示曼哈顿的经纬度
-
-// 引入OpenStreetMap的tile图层
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-  subdomains: 'abcd',
-  maxZoom: 19
-}).addTo(map);
-
-
-// 获取所有树的数据
 async function fetchAllTrees() {
   let allData = [];
   let offset = 0;
@@ -143,96 +143,37 @@ async function fetchAllTrees() {
   return allData;
 }
 
-
 function getTreeCategory(species) {
   const s = (species || "").toLowerCase();
 
-  // 常绿树种
-  if (
-    s.includes("pine") || s.includes("spruce") || s.includes("fir") ||
-    s.includes("cedar") || s.includes("hemlock") || s.includes("arborvitae") ||
-    s.includes("holly") || s.includes("redcedar") || s.includes("white cedar")
-  ) {
+  if (s.includes("pine") || s.includes("spruce") || s.includes("fir") || s.includes("cedar") || s.includes("hemlock")) {
     return {
       group: "Evergreen",
       color: "#283618"
-    }; // 深绿
+    };
   }
-
-  // 坚果类（nut-producing trees）
-  if (
-    s.includes("walnut") || s.includes("hickory") || s.includes("chestnut") ||
-    s.includes("hazelnut") || s.includes("pecan") || s.includes("beech") ||
-    s.includes("oak") // 橡树也结坚果（acorns）
-  ) {
+  if (s.includes("walnut") || s.includes("oak") || s.includes("chestnut")) {
     return {
       group: "Nut Tree",
       color: "#8B4513"
-    }; // 棕色
+    };
   }
-
-  // 水果类（fruiting trees）
-  if (
-    s.includes("cherry") || s.includes("crab") || s.includes("pear") ||
-    s.includes("apple") || s.includes("serviceberry") || s.includes("dogwood") ||
-    s.includes("hackberry") || s.includes("mulberry") || s.includes("ginkgo") ||
-    s.includes("sweetgum") || s.includes("persimmon") || s.includes("fig") ||
-    s.includes("plum") || s.includes("apricot") || s.includes("peach")
-  ) {
+  if (s.includes("cherry") || s.includes("apple") || s.includes("pear")) {
     return {
       group: "Fruiting Tree",
       color: "#FFD700"
-    }; // 黄色
+    };
   }
-
-  // 会开花但不太结果的观赏树
-  if (
-    s.includes("redbud") || s.includes("magnolia") || s.includes("mimosa") ||
-    s.includes("fringetree") || s.includes("empress") || s.includes("snowbell") ||
-    s.includes("crepe") || s.includes("kousa") || s.includes("crimson king") ||
-    s.includes("catalpa") || s.includes("tree lilac") || s.includes("maackia")
-  ) {
+  if (s.includes("magnolia") || s.includes("redbud") || s.includes("crepe")) {
     return {
       group: "Flowering Only",
       color: "#FF69B4"
-    }; // 粉色
+    };
   }
-
-  // 落叶但不开花不开果（或信息不足）
   return {
     group: "Deciduous Non-Flowering",
     color: "#90a955"
-  }; // 浅绿色
-}
-
-// 显示曼哈顿的树，并在地图上添加标记
-async function showManhattanTrees() {
-  const data = await fetchAllTrees();
-  const manhattanTrees = data.filter(tree => tree.boroname === "Manhattan");
-
-  const listContainer = document.getElementById("tree-list");
-  const loadingText = document.getElementById("loading");
-  loadingText.innerText = ` ${manhattanTrees.length} trees you can talk to：`;
-
-  manhattanTrees.forEach(tree => {
-    if (tree.latitude && tree.longitude) {
-      const category = getTreeCategory(tree.spc_common);
-
-      const marker = L.circleMarker([tree.latitude, tree.longitude], {
-          radius: 5,
-          fillColor: category.color,
-          fillOpacity: 0.8,
-          color: 'white',
-          weight: 0.8
-        }).addTo(map)
-        .bindPopup(`
-        <b>🌳 ${tree.spc_common || "Unknown Tree"}</b><br>
-        分类: ${category.group}<br>
-        <button onclick="openChat('${tree.tree_id}', '${category.group}')">💬</button>
-      `);
-      markerMap[tree.tree_id] = marker;
-    }
-  });
+  };
 }
 
 function openChat(id, group) {
@@ -242,13 +183,9 @@ function openChat(id, group) {
 
   chatBox.style.display = "block";
   chatLog.innerHTML = "";
-
-  // 加载聊天记录
   loadChatLog(id, chatLog);
 
-  let title = document.getElementById("chat-title");
-  title.innerHTML = `🌿 ${id}`;
-
+  document.getElementById("chat-title").innerText = `🌿 ${id}`;
   saveTreeToNetwork(id);
 
   const questions = [
@@ -268,6 +205,31 @@ function openChat(id, group) {
   });
 }
 
+function respondToQuestion(question, group, id) {
+  const chatLog = document.getElementById("chat-log");
+  const userMsg = document.createElement('p');
+  userMsg.className = 'human-res pop-msg';
+  userMsg.textContent = `${formatTime()} 🧍 ${question}`;
+  chatLog.appendChild(userMsg);
+
+
+  let response = "🌳 ...";
+  if (question.includes("blossom")) {
+    response = ["Fruiting Tree", "Nut Tree", "Flowering Only"].includes(group) ? "🌸" : "🙅‍♂️";
+  } else if (question.includes("thirsty")) {
+    response = Math.random() < 0.4 ? "💧 yes" : "😊";
+  }
+
+  setTimeout(() => {
+    const treeMsg = document.createElement('p');
+    treeMsg.className = 'tree-res pop-msg';
+    treeMsg.textContent = `${formatTime()} 🌳 ${response}`;
+    chatLog.appendChild(treeMsg);
+    updateChatLog(id, chatLog.innerHTML);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }, 500);
+}
+
 function saveTreeToNetwork(id) {
   let network = JSON.parse(localStorage.getItem("myTreeNetwork")) || [];
   if (!network.includes(id)) {
@@ -276,11 +238,10 @@ function saveTreeToNetwork(id) {
   }
 }
 
-function addToChatLog(treeId, message) {
+function loadChatLog(treeId, chatLog) {
   const key = `chat_${treeId}`;
-  const log = JSON.parse(localStorage.getItem(key)) || [];
-  log.push(message);
-  localStorage.setItem(key, JSON.stringify(log));
+  const savedChat = localStorage.getItem(key);
+  if (savedChat) chatLog.innerHTML = savedChat;
 }
 
 function updateChatLog(treeId, html) {
@@ -288,100 +249,53 @@ function updateChatLog(treeId, html) {
   localStorage.setItem(key, html);
 }
 
-function loadChatLog(treeId, chatLog){
-  const key = `chat_${treeId}`;
-  const savedChat = localStorage.getItem(key);
-  if (savedChat) {
-    chatLog.innerHTML = savedChat;
-  }
-}
+function loadMyNetworkTrees() {
+  fetchAllTrees().then(data => {
+    const myTreeIds = JSON.parse(localStorage.getItem("myTreeNetwork")) || [];
+    const myTrees = data.filter(tree => myTreeIds.includes(tree.tree_id));
+    const positions = [];
 
-function respondToQuestion(question, group, id) {
-  const chatLog = document.getElementById("chat-log");
+    myTrees.forEach(tree => {
+      const category = getTreeCategory(tree.spc_common);
+      const marker = L.circleMarker([tree.latitude, tree.longitude], {
+        radius: 6,
+        fillColor: category.color,
+        fillOpacity: 0.9,
+        color: 'gold',
+        weight: 2
+      }).addTo(map).bindPopup(`
+        <b>🌲 ${tree.spc_common || "Unknown Tree"}</b><br>
+        分类: ${category.group}<br>
+        <i>(In your network)</i><br>
+        <button onclick="openChat('${tree.tree_id}', '${category.group}')">💬</button>
+      `);
+      markerMap[tree.tree_id] = marker;
 
-  chatLog.innerHTML += `<p class="human-res"> ${question} 🧍</p>`;
-
-  let response = "🌳 ...";
-  if (question.includes("blossom")) {
-    if (group == "Fruiting Tree" || group == "Nut Tree" || group == "Flowering Only") {
-      response = "🌸";
-    } else {
-      response = "🙅‍♂️";
-    }
-  } else if (question.includes("thirsty")) {
-    response = Math.random() < 0.4 ? "💧 yes" : "😊";
-  }
-
-  setTimeout(() => {
-    chatLog.innerHTML += `<p class="tree-res">${response}</p>`;
-    updateChatLog(id, chatLog.innerHTML);
-    chatLog.scrollTop = chatLog.scrollHeight;
-  }, 500);
-}
-
-
-function getTreeStatus() {
-  const thirsty = Math.random() < 0.3;
-  const hasFruit = Math.random() < 0.2;
-  const caredFor = Math.random() < 0.5;
-
-  return {
-    thirsty,
-    hasFruit,
-    caredFor
-  };
-}
-
-function sendMessage() {
-  const log = document.getElementById("chat-log");
-
-  const userMessage = input.value.trim();
-  if (userMessage) {
-    log.innerHTML += `<p>🧍 You：${userMessage}</p>`;
-    input.value = "";
-
-    // 简单回应（你可以后续接入 GPT 或规则回应）
-    setTimeout(() => {
-      log.innerHTML += `<p>🌳 ：我正在 photosynthesize 😌</p>`;
-    }, 500);
-  }
-}
-
-
-// 调用函数显示树的数据
-// showManhattanTrees();
-
-function showMyNetwork() {
-  if (networkLine) {
-    map.removeLayer(networkLine);
-    networkLine = null;
-    return;
-  }
-
-  const network = JSON.parse(localStorage.getItem("myTreeNetwork")) || [];
-  const positions = [];
-
-  network.forEach(id => {
-    const marker = markerMap[id]; // 假设你有一个 id → marker 的映射
-    if (marker) {
       const latlng = marker.getLatLng();
       positions.push([latlng.lat, latlng.lng]);
+    });
+
+    if (positions.length > 1) {
+      networkLine = L.polyline(positions, {
+        color: "purple",
+        weight: 3,
+        opacity: 0.7,
+        dashArray: "8, 5"
+      }).addTo(map);
+      map.fitBounds(networkLine.getBounds());
+    } else {
+      alert("你至少需要联系两棵树才会画线！");
     }
   });
-
-  if (positions.length > 1) {
-    networkLine = L.polyline(positions, {
-      color: "purple",
-      weight: 3,
-      opacity: 0.7,
-      dashArray: "8, 5"
-    }).addTo(map);
-    map.fitBounds(networkLine.getBounds());
-  } else {
-    alert("你至少需要联系两棵树才会画线！");
-  }
 }
 
 
-initSelectionBox(); // 拖动方框初始化
-loadMyNetworkTrees(); // 加载用户的树
+function formatTime() {
+  const now = new Date();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const date = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+
+  return `${month}-${date} ${hours}:${minutes}`;
+}

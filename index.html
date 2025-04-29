@@ -3,34 +3,42 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>NYC Trees - Manhattan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyTreeFriend</title>
   <link rel="stylesheet" href="style.css">
   <script src="main.js" defer></script>
-</head>
 
-<body>
-  <h1>🌳 Trees in Manhattan</h1>
-  <p id="loading">Loading data, please wait...</p>
-  <div id="chat-box"
-    style="display:none; position:fixed; bottom:20px; right:20px; width:300px; height:400px; background:white; border:1px solid #ccc; padding:10px;">
-    <h3 id="chat-title"></h3>
-    <div id="chat-log" style="height:200px; overflow-y:auto;"></div>
-    <div id="chat-options"></div>
-  </div>
-  <div id="tree-list"></div>
-
-  <button onclick="showMyNetwork()">🌱 My Tree Network</button>
-
-  <!-- 地图容器 -->
-  <div id="map"></div>
-
-  <!-- 引入Leaflet -->
+  <!-- Leaflet 样式和脚本 -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+</head>
 
+<body>
+
+  <div id="home-screen">
+    <h1>🌳 MyTreeFriend</h1>
+    <p>Make friends with trees around you!</p>
+
+    <div class="home-buttons">
+      <button onclick="startExplore()">🌿 Meet New Friend</button>
+      <button onclick="startNetwork()">🌱 View My Network</button>
+    </div>
+  </div>
+
+  <!-- 地图和聊天相关内容一开始隐藏 -->
+  <div id="map-screen" style="display:none;">
+    <p id="loading">Loading data, please wait...</p>
+    <div id="map"></div>
+    <div id="chat-box" style="display:none;">
+      <h3 id="chat-title"></h3>
+      <div id="chat-log"></div>
+      <div id="chat-options"></div>
+    </div>
+    <button class="back-btn" onclick="backHome()">⬅️ Back to Home</button>
+  </div>
 
 </body>
 
