@@ -8,12 +8,33 @@ const markerMap = {};
 let drawBox;
 let exploreButton;
 
-const personalities = [
-  { type: "Cheerful", delay: 300 },
-  { type: "Calm", delay: 1500 },
-  { type: "Lazy", delay: 3000 },
-  { type: "Talkative", delay: 500 },
-  { type: "Silent", delay: 4000 }
+let lastMessageTimes = {};
+
+const personalities = [{
+    type: "Cheerful",
+    delay: 300,
+    color: "#FFEB3B"
+  },
+  {
+    type: "Calm",
+    delay: 1500,
+    color: "#AED581"
+  },
+  {
+    type: "Lazy",
+    delay: 3000,
+    color: "#BCAAA4"
+  },
+  {
+    type: "Talkative",
+    delay: 500,
+    color: "#FFB74D"
+  },
+  {
+    type: "Silent",
+    delay: 4000,
+    color: "#90A4AE"
+  }
 ];
 
 
@@ -195,9 +216,16 @@ function openChat(id, group) {
   chatLog.innerHTML = "";
   loadChatLog(id, chatLog);
 
-  document.getElementById("chat-title").innerText = `🌿 ${id}`;
   saveTreeToNetwork(id);
   assignPersonalityIfNeeded(id);
+  const personality = getPersonality(id);
+  document.getElementById("chat-title").innerHTML = `
+    🌿 ${id} 
+    <span class="personality-tag" style="background-color:${personality.color};">
+      ${personality.type}
+    </span>
+  `;
+
 
   const questions = [
     "Will you blossom？",
@@ -218,12 +246,31 @@ function openChat(id, group) {
 
 function respondToQuestion(question, group, id) {
   const chatLog = document.getElementById("chat-log");
+  // 用户发言处
+  // timeStamp
+  const now = new Date();
+  const messageWrapper = document.createElement('div');
+  messageWrapper.className = 'message human-message';
+
+  if (shouldShowTimestamp(id, now)) { // 注意加id
+    const timeStamp = document.createElement('div');
+    timeStamp.className = 'timestamp';
+    timeStamp.textContent = formatTime(now);
+    messageWrapper.appendChild(timeStamp);
+  }
+
   const userMsg = document.createElement('p');
-  userMsg.className = 'human-res pop-msg';
-  userMsg.textContent = `${formatTime()} 🧍 ${question}`;
-  chatLog.appendChild(userMsg);
+  userMsg.className = 'chat-bubble human-res pop-msg';
+  userMsg.textContent = `${question} 🧍`;
+  messageWrapper.appendChild(userMsg);
+
+  chatLog.appendChild(messageWrapper);
+
+  lastMessageTimes[id] = now; // 更新这个tree的lastMessageTime
 
 
+
+  // 树回应处
   let response = "🌳 ...";
   if (question.includes("blossom")) {
     response = ["Fruiting Tree", "Nut Tree", "Flowering Only"].includes(group) ? "🌸" : "🙅‍♂️";
@@ -233,12 +280,28 @@ function respondToQuestion(question, group, id) {
 
   const personality = getPersonality(id);
   setTimeout(() => {
+    const now = new Date();
+    const messageWrapper = document.createElement('div');
+    messageWrapper.className = 'message tree-message';
+
+    if (shouldShowTimestamp(id, now)) { // 注意加id
+      const timeStamp = document.createElement('div');
+      timeStamp.className = 'timestamp';
+      timeStamp.textContent = formatTime(now);
+      messageWrapper.appendChild(timeStamp);
+    }
+
     const treeMsg = document.createElement('p');
-    treeMsg.className = 'tree-res pop-msg';
-    treeMsg.textContent = `${formatTime()} 🌳 ${response}`;
-    chatLog.appendChild(treeMsg);
+    treeMsg.className = 'chat-bubble tree-res pop-msg';
+    treeMsg.textContent = `🌳 ${response}`;
+    messageWrapper.appendChild(treeMsg);
+
+    chatLog.appendChild(messageWrapper);
+
     updateChatLog(id, chatLog.innerHTML);
     chatLog.scrollTop = chatLog.scrollHeight;
+
+    lastMessageTimes[id] = now; // 更新这个tree的lastMessageTime
   }, personality.delay);
 }
 
@@ -315,15 +378,24 @@ function getPersonality(id) {
   if (saved) {
     return JSON.parse(saved);
   }
-  return { type: "Calm", delay: 1500 }; // 默认给个性格
+  return {
+    type: "Calm",
+    delay: 1500
+  }; // 默认给个性格
 }
 
-function formatTime() {
-  const now = new Date();
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  const date = now.getDate().toString().padStart(2, '0');
-  const hours = now.getHours().toString().padStart(2, '0');
-  const minutes = now.getMinutes().toString().padStart(2, '0');
+function shouldShowTimestamp(treeId, now) {
+  const lastTime = lastMessageTimes[treeId];
+  if (!lastTime) return true;
+  const diff = now - lastTime; // 毫秒差
+  return diff > 2 * 60 * 1000; // 大于2分钟
+}
 
-  return `${month}-${date} ${hours}:${minutes}`;
+
+function formatTime(date) {
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const hour = date.getHours().toString().padStart(2, '0');
+  const minute = date.getMinutes().toString().padStart(2, '0');
+  return `${month}-${day} ${hour}:${minute}`;
 }

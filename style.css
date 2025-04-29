@@ -1,10 +1,14 @@
+/* 全局设置 */
 body {
-  font-family: sans-serif;
-  padding: 20px;
+  font-family: 'Noto Sans', 'Quicksand', sans-serif;
+  background-color: #F1F8E9; /* 超浅绿背景 */
+  color: #333333; /* 深灰色文字 */
   margin: 0;
+  padding: 20px;
   overflow-x: hidden;
 }
 
+/* 首页按钮区 */
 .home-buttons {
   text-align: center;
   margin-top: 50px;
@@ -14,22 +18,28 @@ body {
   font-size: 24px;
   padding: 20px 40px;
   margin: 20px;
-  background-color: #4caf50;
+  background-color: #81C784; /* 温暖绿 */
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: 16px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
 .home-buttons button:hover {
-  background-color: #388e3c;
+  background-color: #66BB6A; /* 更深一点的绿 */
+  transform: scale(1.05);
 }
 
+/* 地图样式 */
 #map {
   height: 80vh;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
+/* 聊天框 */
 #chat-box {
   position: fixed;
   bottom: 20px;
@@ -38,11 +48,13 @@ body {
   height: 500px;
   background: white;
   border: 1px solid #ccc;
+  border-radius: 16px;
   padding: 10px;
   overflow-y: auto;
   z-index: 2000;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 #chat-log {
@@ -59,41 +71,46 @@ body {
   position: absolute;
   top: 20px;
   left: 20px;
-  background: white;
-  border: 1px solid #ccc;
+  background: #FFD54F; /* 温暖金黄 */
+  border: none;
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 12px;
+  font-weight: bold;
   cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
+.back-btn:hover {
+  background: #FFC107;
+  transform: scale(1.05);
+}
+
+/* 聊天气泡 */
 .human-res {
-  background-color: #ccc;
+  background-color: #D7CCC8; /* 柔和棕色 */
   margin: 0.25em 0;
-  padding: 0.25em;
-  border-radius: 0.5em;
-  /* text-align: right; */
+  padding: 0.5em;
+  border-radius: 1em;
+  text-align: right;
+  max-width: 80%;
+  margin-left: auto;
+  word-break: break-word;
+  animation: popIn 0.2s ease-out;
 }
 
 .tree-res {
-  background-color: aquamarine;
+  background-color: #C5E1A5; /* 浅绿气泡 */
   margin: 0.25em 0;
-  padding: 0.25em;
-  border-radius: 0.5em;
+  padding: 0.5em;
+  border-radius: 1em;
+  text-align: left;
+  max-width: 80%;
+  margin-right: auto;
+  word-break: break-word;
+  animation: popIn 0.2s ease-out;
 }
 
-.explore-btn {
-  position: absolute;
-  z-index: 1000;
-  background-color: white;
-  border: 2px solid #4caf50;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  pointer-events: auto;
-  /* 确保可以点 */
-}
-
+/* 聊天气泡弹出动画 */
 @keyframes popIn {
   0% {
     transform: scale(0.6);
@@ -105,6 +122,37 @@ body {
   }
 }
 
-.pop-msg {
-  animation: popIn 0.2s ease-out;
+/* Explore 按钮（跟随矩形框的那个） */
+.explore-btn {
+  position: absolute;
+  z-index: 1000;
+  background-color: white;
+  border: 2px solid #4CAF50;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.explore-btn:hover {
+  background-color: #E8F5E9;
+}
+
+
+.personality-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #333;
+  background-color: #ccc;
+}
+
+.timestamp {
+  font-size: 10px;
+  color: #999;
+  margin-bottom: 4px;
+  text-align: center;
 }
