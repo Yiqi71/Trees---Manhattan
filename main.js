@@ -313,6 +313,8 @@ function openChat(id, group) {
 
   saveTreeToNetwork(id);
   assignPersonalityIfNeeded(id);
+  assignPreferencesIfNeeded(id); // 👈 为当前树初始化喜好
+
   const personality = getPersonality(id);
   document.getElementById("chat-title").innerHTML = `
     🌿 ${id} 
@@ -331,8 +333,14 @@ function openChat(id, group) {
       text: "Are you thirsty?",
       emoji: "💧/😊"
     },
-    { text: "Do you like today’s temperature?", emoji: "💧/😖" },
-    { text: "Who is your favorite friend?", emoji: "🐦/🐿️/🍃/🐱" }
+    {
+      text: "Do you like today’s temperature?",
+      emoji: "😊/😖"
+    },
+    {
+      text: "Who is your favorite friend?",
+      emoji: "🐦/🐿️/🍃/🐱"
+    }
   ];
 
   const shuffled = questions.sort(() => 0.5 - Math.random());
@@ -384,14 +392,24 @@ function respondToQuestion(question, group, id) {
   if (question.includes("blossom")) {
     response = ["Fruiting Tree", "Nut Tree", "Flowering Only"].includes(group) ? "🌸" : "🙅‍♂️";
   } else if (question.includes("thirsty")) {
-    response = Math.random() < 0.4 ? "💧 yes" : "😊";
-  } else if (question.includes("humidity")) {
-    response = "💧 I love it today!"; // 你也可以随机或根据树种生成不同反应
-  } else if (question.includes("favorite friend")) {
-    const friends = ["🐦 birds", "🐿️ squirrels", "🍃 leaves", "🐱 cats"];
-    response = friends[Math.floor(Math.random() * friends.length)];
+    response = Math.random() < 0.4 ? "💧" : "😊";
   }
-  
+  const preferences = getPreferences(id);
+
+  if (question.includes("temperature")) {
+    response = preferences.likesTemperature ? "😊" : "😖";
+  } else if (question.includes("favorite friend")) {
+    const emojis = {
+      bird: "🐦",
+      squirrel: "🐿️",
+      leaf: "🍃",
+      cat: "🐱"
+    };
+    const friend = preferences.favoriteFriend;
+    response = `${emojis[friend]}!`;
+  }
+
+
 
   const personality = getPersonality(id);
   setTimeout(() => {
@@ -504,6 +522,28 @@ function getPersonality(id) {
     delay: 1500
   }; // 默认给个性格
 }
+
+function assignPreferencesIfNeeded(id) {
+  const key = `preferences_${id}`;
+  if (!localStorage.getItem(key)) {
+    const randomPreference = {
+      likesTemperature: Math.random() < 0.5, // true or false
+      favoriteFriend: ["bird", "squirrel", "leaf", "cat"][Math.floor(Math.random() * 4)]
+    };
+    localStorage.setItem(key, JSON.stringify(randomPreference));
+  }
+}
+
+function getPreferences(id) {
+  const key = `preferences_${id}`;
+  const saved = localStorage.getItem(key);
+  if (saved) return JSON.parse(saved);
+  return {
+    likesTemperature: true,
+    favoriteFriend: "bird"
+  };
+}
+
 
 function shouldShowTimestamp(treeId, now) {
   const lastTime = lastMessageTimes[treeId];
