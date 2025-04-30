@@ -37,21 +37,60 @@ const personalities = [{
   }
 ];
 
+let networkVisible = false;
+
+function toggleNetwork() {
+  if (networkVisible) {
+    hideNetwork();
+  } else {
+    showNetwork();
+  }
+}
+
+function showNetwork() {
+  networkVisible = true;
+  document.getElementById('toggle-network-btn').innerText = "🙈 Hide My Network";
+  loadMyNetworkTrees(); // 重画 networkLine 和 marker
+}
+
+function hideNetwork() {
+  networkVisible = false;
+  document.getElementById('toggle-network-btn').innerText = "👥 View My Network";
+  if (networkLine) {
+    map.removeLayer(networkLine);
+    networkLine = null;
+  }
+
+  const myTreeIds = JSON.parse(localStorage.getItem("myTreeNetwork")) || [];
+  myTreeIds.forEach(id => {
+    if (markerMap[id]) {
+      map.removeLayer(markerMap[id]);
+      delete markerMap[id];
+    }
+  });
+}
+
 
 function startExplore() {
   document.getElementById('home-screen').style.display = 'none';
-  document.getElementById('map-screen').style.display = 'block';
+  document.getElementById('map-screen').style.display = 'flex';
 
   initMap();
   initSelectionBox();
+
+  document.getElementById('toggle-network-btn').style.display = 'inline-block';
+  hideNetwork(); // 初始隐藏
 }
 
 function startNetwork() {
   document.getElementById('home-screen').style.display = 'none';
-  document.getElementById('map-screen').style.display = 'block';
+  document.getElementById('map-screen').style.display = 'flex';
 
   initMap();
+  initSelectionBox();
   loadMyNetworkTrees();
+  document.getElementById('toggle-network-btn').style.display = 'inline-block';
+  showNetwork(); // 初始显示 network
 }
 
 function backHome() {
@@ -175,20 +214,20 @@ async function exploreTreesInCircle() {
 async function fetchAllTrees() {
   let allData = [];
   const boroughs = ["Brooklyn"];
-  
+
   for (const borough of boroughs) {
     let offset = 0;
     const limit = 1000;
     let moreData = true;
-    
+
     while (moreData) {
       const response = await fetch(`https://data.cityofnewyork.us/resource/uvpi-gqnh.json?$limit=${limit}&$offset=${offset}&borough=${encodeURIComponent(borough)}`);
-      
+
       if (!response.ok) {
         console.error(`❌ Fetch failed at offset ${offset} for borough ${borough}`);
         break;
       }
-      
+
       const data = await response.json();
       const cleanedData = data.map(tree => ({
         tree_id: tree.tree_id,
@@ -284,9 +323,16 @@ function openChat(id, group) {
 
 
 
-  const questions = [
-    { text: "Will you blossom?", emoji:  "🌸/🙅‍♂️" },
-    { text: "Are you thirsty?", emoji: "💧/😊" }
+  const questions = [{
+      text: "Will you blossom?",
+      emoji: "🌸/🙅‍♂️"
+    },
+    {
+      text: "Are you thirsty?",
+      emoji: "💧/😊"
+    },
+    { text: "Do you like today’s temperature?", emoji: "💧/😖" },
+    { text: "Who is your favorite friend?", emoji: "🐦/🐿️/🍃/🐱" }
   ];
 
   const shuffled = questions.sort(() => 0.5 - Math.random());
@@ -300,8 +346,8 @@ function openChat(id, group) {
     btn.style.margin = "3px";
     btn.addEventListener('click', function () {
       respondToQuestion(q.text, group, id);
-      this.remove();  
-    });  
+      this.remove();
+    });
     chatOptions.appendChild(btn);
   });
 }
@@ -339,7 +385,13 @@ function respondToQuestion(question, group, id) {
     response = ["Fruiting Tree", "Nut Tree", "Flowering Only"].includes(group) ? "🌸" : "🙅‍♂️";
   } else if (question.includes("thirsty")) {
     response = Math.random() < 0.4 ? "💧 yes" : "😊";
+  } else if (question.includes("humidity")) {
+    response = "💧 I love it today!"; // 你也可以随机或根据树种生成不同反应
+  } else if (question.includes("favorite friend")) {
+    const friends = ["🐦 birds", "🐿️ squirrels", "🍃 leaves", "🐱 cats"];
+    response = friends[Math.floor(Math.random() * friends.length)];
   }
+  
 
   const personality = getPersonality(id);
   setTimeout(() => {
@@ -389,6 +441,9 @@ function updateChatLog(treeId, html) {
 }
 
 function loadMyNetworkTrees() {
+  const loading = document.getElementById("loading-indicator");
+  loading.style.display = "block"; // 👈 开始加载动画
+
   fetchAllTrees().then(data => {
     const myTreeIds = JSON.parse(localStorage.getItem("myTreeNetwork")) || [];
     const myTrees = data.filter(tree => myTreeIds.includes(tree.tree_id));
@@ -403,10 +458,11 @@ function loadMyNetworkTrees() {
         color: 'gold',
         weight: 2
       }).addTo(map).bindPopup(`
-        <b>🌲 ${tree.spc_common || "Unknown Tree"}</b><br>
-        分类: ${category.group}<br>
-        <i>(In your network)</i><br>
-        <button onclick="openChat('${tree.tree_id}', '${category.group}')">💬</button>
+        <div class="popup-card">
+          <div class="popup-title">🌳 ${tree.spc_common || "Unknown Tree"}</div>
+          <div class="popup-category">a ${category.group}</div>
+          <button class="popup-chat-button" onclick="openChat('${tree.tree_id}', '${category.group}')">🌱 Try to Connect</button>
+        </div>
       `);
       markerMap[tree.tree_id] = marker;
 
@@ -421,10 +477,11 @@ function loadMyNetworkTrees() {
         opacity: 0.7,
         dashArray: "8, 5"
       }).addTo(map);
-      map.fitBounds(networkLine.getBounds());
+      // map.fitBounds(networkLine.getBounds());
     } else {
       alert("你至少需要联系两棵树才会画线！");
     }
+    loading.style.display = "none"; // 👈 加载结束隐藏动画
   });
 }
 

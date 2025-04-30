@@ -10,6 +10,16 @@ body {
   overflow-x: hidden;
 }
 
+#gpt-img {
+  max-width: 80%;
+  max-height: 58vh;
+  display: block;
+  margin: 30px auto 20px auto;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+
 /* 首页按钮区 */
 .home-buttons {
   text-align: center;
@@ -17,13 +27,14 @@ body {
 }
 
 .home-buttons button {
-  font-size: 24px;
-  padding: 20px 40px;
+  font-size: 20px;
+  padding: 15px 30px;
   margin: 20px;
   background-color: #81C784;
   /* 温暖绿 */
   color: white;
   border: none;
+  font-weight: bold;
   border-radius: 16px;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
@@ -38,7 +49,8 @@ body {
 /* 地图样式 */
 #map {
   height: 80vh;
-  border-radius: 12px;
+  width:calc(100% - 40px);
+  border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -75,7 +87,7 @@ body {
   max-width: 70%;
   display: inline-block;
   padding: 10px 15px;
-  border-radius: 18px;
+  border-radius: 16px;
   word-break: break-word;
   font-size: 16px;
   animation: popIn 0.2s ease-out;
@@ -115,20 +127,19 @@ body {
 
 .back-btn {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  background: #FFD54F;
-  /* 温暖金黄 */
-  border: none;
+  top: calc(80vh + 15px + 55px);
+  left: 60px;
+  background: none;
+  border: solid 2px #C5E1A5;
   padding: 10px 20px;
-  border-radius: 12px;
+  border-radius: 16px;
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
 }
 
 .back-btn:hover {
-  background: #FFC107;
+  background: #C5E1A5;
   transform: scale(1.05);
 }
 
@@ -177,7 +188,7 @@ body {
   background-color: white;
   border: 2px solid #4CAF50;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 16px;
   font-size: 14px;
   cursor: pointer;
   pointer-events: auto;
@@ -283,18 +294,6 @@ body {
   display: none !important;
 }
 
-/* .popup-card::after {
-  content: "";
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 16px;
-  height: 16px;
-  background: #F1F8E9;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-} */
 
 
 @keyframes fadeInPopup {
@@ -317,7 +316,7 @@ body {
   transform: translate(-50%, -50%);
   background-color: rgba(255, 255, 255, 0.95);
   padding: 20px 30px;
-  border-radius: 10px;
+  border-radius: 16px;
   font-size: 18px;
   z-index: 9999;
   box-shadow: 0 0 15px rgba(0,0,0,0.2);
@@ -328,4 +327,33 @@ body {
   0% { opacity: 1; }
   50% { opacity: 0.4; }
   100% { opacity: 1; }
+}
+
+
+
+.toggle-network-btn {
+  display: block;
+  margin: 15px auto 0 auto;
+  padding: 10px 20px;
+  /* font-size: 16px; */
+  font-weight: bold;
+  background-color: #AED581;
+  color: #2e7d32;
+  border: solid 2px #AED581;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle-network-btn:hover {
+  background-color: #9ccc65;
+}
+
+#map-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* ⬅️ 水平居中所有子元素 */
+  justify-content: flex-start;
+  padding: 20px;
+  gap: 16px;             /* ⬅️ 子元素之间留点空隙 */
 }

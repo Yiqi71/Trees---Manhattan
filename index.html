@@ -25,6 +25,8 @@
     <h1>🌳 MyTreeFriend</h1>
     <p>Make friends with trees around you!</p>
 
+    <img src="GPTimg.png" alt="MyTreeFriend Visual" id="gpt-img" />
+
     <div class="home-buttons">
       <button onclick="startExplore()">🌿 Meet New Friend</button>
       <button onclick="startNetwork()">🌱 View My Network</button>
@@ -36,6 +38,10 @@
     <button class="back-btn" onclick="backHome()">⬅️ Back to Home</button>
     <!-- <p id="loading">Loading data, please wait...</p> -->
     <div id="map"></div>
+    <button id="toggle-network-btn" class="toggle-network-btn" onclick="toggleNetwork()" style="display: none;">
+      👥 View My Network
+    </button>
+    
     <div id="chat-box" style="display:none;">
       <h3 id="chat-title"></h3>
       <div id="chat-log"></div>
