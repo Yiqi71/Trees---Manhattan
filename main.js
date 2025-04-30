@@ -50,13 +50,16 @@ function toggleNetwork() {
 function showNetwork() {
   networkVisible = true;
   document.getElementById('toggle-network-btn').innerText = "🙈 Hide My Network";
-  loadMyNetworkTrees(); // 重画 networkLine 和 marker
+
+    loadMyNetworkTrees(); // 重画 networkLine 和 marker
+
 }
 
 function hideNetwork() {
   networkVisible = false;
   document.getElementById('toggle-network-btn').innerText = "👥 View My Network";
   if (networkLine) {
+    
     map.removeLayer(networkLine);
     networkLine = null;
   }
@@ -88,7 +91,6 @@ function startNetwork() {
 
   initMap();
   initSelectionBox();
-  loadMyNetworkTrees();
   document.getElementById('toggle-network-btn').style.display = 'inline-block';
   showNetwork(); // 初始显示 network
 }
@@ -490,7 +492,7 @@ function loadMyNetworkTrees() {
 
     if (positions.length > 1) {
       networkLine = L.polyline(positions, {
-        color: "purple",
+        color: "green",
         weight: 3,
         opacity: 0.7,
         dashArray: "8, 5"
