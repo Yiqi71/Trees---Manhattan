@@ -49,7 +49,7 @@ function toggleNetwork() {
 
 function showNetwork() {
   networkVisible = true;
-  document.getElementById('toggle-network-btn').innerText = "🙈 Hide My Network";
+  document.getElementById('toggle-network-btn').innerText = "🙈 Hide My Connections";
 
     loadMyNetworkTrees(); // 重画 networkLine 和 marker
 
@@ -57,7 +57,7 @@ function showNetwork() {
 
 function hideNetwork() {
   networkVisible = false;
-  document.getElementById('toggle-network-btn').innerText = "👥 View My Network";
+  document.getElementById('toggle-network-btn').innerText = "👥 View My Connections";
   if (networkLine) {
     
     map.removeLayer(networkLine);
