@@ -132,6 +132,30 @@ body {
   transform: scale(1.05);
 }
 
+.chat-option-button {
+  background-color: #D7CCC8; /* 同用户聊天气泡背景 */
+  border: none;
+  color: #3E2723; /* 深棕，更人文自然 */
+  font-weight: 500;
+  border-radius: 20px;
+  padding: 8px 16px;
+  margin: 6px 6px 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.chat-option-button:hover {
+  background-color: #BCAAA4;
+  transform: scale(1.05);
+}
+
+.chat-option-button:active {
+  background-color: #A1887F;
+  color: white;
+}
+
 
 /* 聊天气泡弹出动画 */
 @keyframes popIn {

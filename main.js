@@ -283,19 +283,25 @@ function openChat(id, group) {
   `;
 
 
+
   const questions = [
-    "Will you blossom？",
-    "Are you thirsty？"
+    { text: "Will you blossom?", emoji:  "🌸/🙅‍♂️" },
+    { text: "Are you thirsty?", emoji: "💧/😊" }
   ];
+
   const shuffled = questions.sort(() => 0.5 - Math.random());
   const selected = shuffled.slice(0, 3);
 
   chatOptions.innerHTML = "";
   selected.forEach(q => {
     const btn = document.createElement("button");
-    btn.innerText = q;
+    btn.className = "chat-option-button";
+    btn.innerText = q.emoji;
     btn.style.margin = "3px";
-    btn.onclick = () => respondToQuestion(q, group, id);
+    btn.addEventListener('click', function () {
+      respondToQuestion(q.text, group, id);
+      this.remove();  
+    });  
     chatOptions.appendChild(btn);
   });
 }
